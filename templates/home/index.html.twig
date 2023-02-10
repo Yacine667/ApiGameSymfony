@@ -1,20 +1,107 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello HomeController!{% endblock %}
+{% block title %}BordGame Api{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+<h4>Search A Game</h4>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code><a href="{{ '/Users/sidyacine/Documents/Projet Formation/ApiGameSymfony/src/Controller/HomeController.php'|file_link(0) }}">src/Controller/HomeController.php</a></code></li>
-        <li>Your template at <code><a href="{{ '/Users/sidyacine/Documents/Projet Formation/ApiGameSymfony/templates/home/index.html.twig'|file_link(0) }}">templates/home/index.html.twig</a></code></li>
-    </ul>
+<div class="form-group">
+    <input class="form-control mb-4" type ="text" name = "search" id="search" placeholder= "Search ...">
+    <select class ="form-control form-control-lg" name= "games" id="games"></select>
 </div>
+
+<div class="game-info">
+    <img class="img" id="game-img" src="{{ asset("img/image.svg")}}" alt="">
+
+    <div class="desc">
+        <h3 class="mt-0 mb-0" id="title"></h3>
+        <div class="infos">
+            <p class="players mb-0" id="players"></p>
+            <p class="minutes mb-0" id="minutes"></p>
+        </div>
+        <p class="text" id="text"></p>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block javascripts %}
+
+<script>
+
+    window.addEventListener('DOMContentLoaded', (event) => {
+
+        const search = document.querySelector('#search');
+        const select = document.querySelector('#games');
+        const img = document.querySelector('#game-img');
+        const title = document.querySelector('#title');
+        const p = document.querySelector('#text');
+        const players = document.querySelector('#players');
+        const minutes = document.querySelector('#minutes');
+   
+
+    search.addEventListener('focusout',(e) =>{
+        select.innerText = null;
+        e.preventDefault();
+        const searchValue = search.value;
+
+        const url = '/games';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': '*/*'
+            },
+            body: new URLSearchParams({
+                'searchValue' : searchValue
+            })
+        })
+        .then(async (response) =>{
+            const rep = await response.json()
+            for (r in rep["games"]) {
+                let option = document.createElement('option');
+                option.innerText = rep["games"][r]["name"] +  " (" + rep["games"][r]["year_published"] + ")";
+                option.value = rep["games"][r]["id"];
+                select.append(option);
+            }
+
+            console.log(rep["games"])
+
+        })
+    })
+
+    select.addEventListener('change',(e) => {
+        e.preventDefault();
+        const gameId = select.selectedOptions[0].value
+        console.log(gameId)
+        const urlGame = '/game';
+        fetch(urlGame,{
+            method : 'POST',
+            headers : {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': '*/*'
+            },
+            body: new URLSearchParams({
+                'gameId' : gameId
+            })
+        })
+        .then(async (response) => {
+            const rep = await response.json();
+            console.log(rep)
+            img.src = rep["games"][0]["image_url"] ? rep["games"][0]["image_url"] : '../img/image.svg';
+            p.innerHTML = rep["games"][0]["description"];
+            title.innerHTML = rep["games"][0]["name"];
+            players.innerHTML = rep["games"][0]["players"];
+            minutes.innerHTML = rep["games"][0]["playtime"];
+            
+        })
+    })
+})
+
+
+</script>
+
 {% endblock %}
